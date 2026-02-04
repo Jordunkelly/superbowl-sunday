@@ -418,64 +418,15 @@
             to { opacity: 1; }
         }
 
-        /* Password overlay */
-        .password-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, var(--field-green) 0%, var(--endzone) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            flex-direction: column;
-            gap: 30px;
-            padding: 20px;
-        }
-
-        .password-overlay.hidden {
-            display: none;
-        }
-
-        .password-overlay .countdown {
-            max-width: 600px;
-            width: 100%;
-        }
-
-        .password-box {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px var(--shadow);
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-        }
-
-        .password-box h2 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 2.5rem;
+        /* Password input in form */
+        .password-hint {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid var(--gold);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
             color: var(--field-green);
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-
-        .password-box p {
-            color: #666;
-            margin-bottom: 25px;
-        }
-
-        .password-error {
-            color: #c00;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .password-error.show {
-            display: block;
         }
 
         @media (max-width: 768px) {
@@ -499,22 +450,6 @@
     </style>
 </head>
 <body>
-    <!-- Password Overlay -->
-    <div class="password-overlay" id="passwordOverlay">
-        <div class="countdown">
-            <div class="countdown-label">⏰ Kickoff In</div>
-            <div class="countdown-timer" id="passwordCountdown"></div>
-        </div>
-        
-        <div class="password-box">
-            <h2>🏈 Game Day Access</h2>
-            <p>Enter the password to add items</p>
-            <input type="password" id="passwordInput" placeholder="Enter password">
-            <p class="password-error" id="passwordError">Incorrect password!</p>
-            <button onclick="checkPassword()">Enter</button>
-        </div>
-    </div>
-
     <div class="container">
         <!-- Countdown Timer -->
         <div class="countdown">
@@ -555,8 +490,11 @@
         </div>
 
         <!-- Add Item Form -->
-        <div class="card" id="addItemCard" style="display: none;">
+        <div class="card" id="addItemCard">
             <h2>📝 Add Your Contribution</h2>
+            <div class="password-hint">
+                🔒 Password required to add items
+            </div>
             <div id="messageArea"></div>
             <div class="form-group">
                 <label for="nameInput">Your Name</label>
@@ -566,6 +504,10 @@
                 <label for="foodInput">What You're Bringing</label>
                 <input type="text" id="foodInput" placeholder="e.g., Buffalo Wings" required>
             </div>
+            <div class="form-group">
+                <label for="passwordInput">Password</label>
+                <input type="password" id="passwordInput" placeholder="Enter password to submit" required>
+            </div>
             <button id="submitButton" onclick="addItem()">Add to Roster</button>
         </div>
     </div>
@@ -573,11 +515,9 @@
     <script>
         // Configuration
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/pub?gid=0&single=true&output=csv';
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyunH8lVgZU8irHx9KBysh_zEENVc52EVUwAWsiYAE-AiSlFTAMrrXqGTR1IDERD_FsXw/exec'; // Replace with your Apps Script Web App URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbynH8lVgZU8irHx9KBysh_zEENVc52EVUwAWsiYAE-AiSlFTAMrrXqGTR1IDER_FsXw/exec';
         const PASSWORD = 'kelly';
         const SUPERBOWL_DATE = new Date('2026-02-09T18:30:00-05:00'); // Feb 9, 2026, 6:30 PM ET
-        
-        let isAuthenticated = false;
 
         // Countdown Timer
         function updateCountdown(elementId) {
@@ -613,27 +553,6 @@
                 </div>
             `;
         }
-
-        // Check password
-        function checkPassword() {
-            const input = document.getElementById('passwordInput');
-            const error = document.getElementById('passwordError');
-            
-            if (input.value === PASSWORD) {
-                isAuthenticated = true;
-                document.getElementById('passwordOverlay').classList.add('hidden');
-                document.getElementById('addItemCard').style.display = 'block';
-            } else {
-                error.classList.add('show');
-                input.value = '';
-                setTimeout(() => error.classList.remove('show'), 3000);
-            }
-        }
-
-        // Allow Enter key for password
-        document.getElementById('passwordInput')?.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') checkPassword();
-        });
 
         // Parse CSV
         function parseCSV(text) {
@@ -695,17 +614,21 @@
 
         // Add item to Google Sheet
         async function addItem() {
-            if (!isAuthenticated) {
-                showMessage('⚠️ Please enter the password first!', 'error');
+            const name = document.getElementById('nameInput').value.trim();
+            const food = document.getElementById('foodInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const button = document.getElementById('submitButton');
+            
+            // Validate all fields
+            if (!name || !food || !password) {
+                showMessage('⚠️ Please fill in all fields!', 'error');
                 return;
             }
 
-            const name = document.getElementById('nameInput').value.trim();
-            const food = document.getElementById('foodInput').value.trim();
-            const button = document.getElementById('submitButton');
-            
-            if (!name || !food) {
-                showMessage('⚠️ Please fill in both fields!', 'error');
+            // Check password
+            if (password !== PASSWORD) {
+                showMessage('❌ Incorrect password!', 'error');
+                document.getElementById('passwordInput').value = '';
                 return;
             }
 
@@ -720,6 +643,7 @@
                     body: JSON.stringify({
                         name: name,
                         food: food,
+                        password: PASSWORD, // Send password for server-side verification
                         ts: Date.now()
                     })
                 });
@@ -727,12 +651,14 @@
                 showMessage(`✅ Added ${name} - ${food} to the roster!`, 'success');
                 document.getElementById('nameInput').value = '';
                 document.getElementById('foodInput').value = '';
+                document.getElementById('passwordInput').value = '';
                 
                 setTimeout(loadData, 2000);
             } catch (error) {
                 showMessage('✅ Item submitted! Refreshing list...', 'success');
                 document.getElementById('nameInput').value = '';
                 document.getElementById('foodInput').value = '';
+                document.getElementById('passwordInput').value = '';
                 setTimeout(loadData, 2000);
             } finally {
                 button.disabled = false;
@@ -753,10 +679,8 @@
         }
 
         // Initialize
-        updateCountdown('passwordCountdown');
         updateCountdown('mainCountdown');
         setInterval(() => {
-            updateCountdown('passwordCountdown');
             updateCountdown('mainCountdown');
         }, 1000);
         
