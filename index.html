@@ -513,179 +513,158 @@
     </div>
 
     <script>
-        // Configuration
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/pub?gid=0&single=true&output=csv';
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbynH8lVgZU8irHx9KBysh_zEENVc52EVUwAWsiYAE-AiSlFTAMrrXqGTR1IDER_FsXw/exec';
-        const PASSWORD = 'kelly';
-        const SUPERBOWL_DATE = new Date('2026-02-09T18:30:00-05:00'); // Feb 9, 2026, 6:30 PM ET
+    // ================= CONFIG (SAFE PART) =================
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/pub?gid=0&single=true&output=csv';
 
-        // Countdown Timer
-        function updateCountdown(elementId) {
-            const now = new Date();
-            const diff = SUPERBOWL_DATE - now;
-            
-            if (diff <= 0) {
-                document.getElementById(elementId).innerHTML = '<div class="countdown-unit"><div class="countdown-number">🏈</div><div class="countdown-text">GAME TIME!</div></div>';
-                return;
-            }
-            
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            
-            document.getElementById(elementId).innerHTML = `
-                <div class="countdown-unit">
-                    <div class="countdown-number">${days}</div>
-                    <div class="countdown-text">Days</div>
-                </div>
-                <div class="countdown-unit">
-                    <div class="countdown-number">${hours}</div>
-                    <div class="countdown-text">Hours</div>
-                </div>
-                <div class="countdown-unit">
-                    <div class="countdown-number">${minutes}</div>
-                    <div class="countdown-text">Minutes</div>
-                </div>
-                <div class="countdown-unit">
-                    <div class="countdown-number">${seconds}</div>
-                    <div class="countdown-text">Seconds</div>
-                </div>
-            `;
+    // ⚠️ THESE SHOULD COME FROM ENV VARIABLES IN REAL HOSTING
+    const SCRIPT_URL = window.GSHEET_URL || '';
+    const API_KEY = window.GSHEET_KEY || '';
+
+    const SUPERBOWL_DATE = new Date('2026-02-09T18:30:00-05:00');
+
+    // ================ COUNTDOWN =================
+    function updateCountdown(elementId) {
+        const now = new Date();
+        const diff = SUPERBOWL_DATE - now;
+
+        if (diff <= 0) {
+            document.getElementById(elementId).innerHTML =
+                '<div class="countdown-unit"><div class="countdown-number">🏈</div><div class="countdown-text">GAME TIME!</div></div>';
+            return;
         }
 
-        // Parse CSV
-        function parseCSV(text) {
-            const lines = text.split('\n');
-            const result = [];
-            
-            for (let line of lines) {
-                if (line.trim()) {
-                    const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-                    result.push(values);
-                }
-            }
-            
-            return result;
-        }
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-        // Load data from published CSV
-        async function loadData() {
-            try {
-                const url = CSV_URL + '&t=' + new Date().getTime();
-                const response = await fetch(url);
-                
-                if (!response.ok) throw new Error('Failed to load data');
-                
-                const csvText = await response.text();
-                const rows = parseCSV(csvText);
-                
-                const foodList = document.getElementById('foodList');
-                const loadingMessage = document.getElementById('loadingMessage');
-                const itemCount = document.getElementById('itemCount');
-                
-                loadingMessage.style.display = 'none';
-                foodList.innerHTML = '';
-                
-                if (rows.length > 1) {
-                    const dataRows = rows.slice(1).filter(row => row[0] && row[1]);
-                    itemCount.textContent = dataRows.length;
-                    
-                    dataRows.forEach((row, index) => {
-                        const li = document.createElement('li');
-                        li.className = 'food-item';
-                        li.style.animationDelay = `${index * 0.05}s`;
-                        li.innerHTML = `
-                            <span class="name">${escapeHtml(row[0])}</span>
-                            <span class="item">${escapeHtml(row[1])}</span>
-                        `;
-                        foodList.appendChild(li);
-                    });
-                } else {
-                    itemCount.textContent = '0';
-                    foodList.innerHTML = '<li class="food-item"><span class="name">No items yet</span><span class="item">Be the first to add!</span></li>';
-                }
-            } catch (error) {
-                document.getElementById('loadingMessage').innerHTML = 
-                    `<div class="error">Error loading data.<br><small>${error.message}</small></div>`;
-                console.error('Error:', error);
-            }
-        }
+        document.getElementById(elementId).innerHTML = `
+            <div class="countdown-unit"><div class="countdown-number">${days}</div><div class="countdown-text">Days</div></div>
+            <div class="countdown-unit"><div class="countdown-number">${hours}</div><div class="countdown-text">Hours</div></div>
+            <div class="countdown-unit"><div class="countdown-number">${minutes}</div><div class="countdown-text">Minutes</div></div>
+            <div class="countdown-unit"><div class="countdown-number">${seconds}</div><div class="countdown-text">Seconds</div></div>
+        `;
+    }
 
-        // Add item to Google Sheet
-        async function addItem() {
-            const name = document.getElementById('nameInput').value.trim();
-            const food = document.getElementById('foodInput').value.trim();
-            const password = document.getElementById('passwordInput').value;
-            const button = document.getElementById('submitButton');
-            
-            // Validate all fields
-            if (!name || !food || !password) {
-                showMessage('⚠️ Please fill in all fields!', 'error');
-                return;
-            }
+    // ================ CSV LOADER =================
+    function parseCSV(text) {
+        return text.split('\n')
+            .filter(l => l.trim())
+            .map(line => line.split(',').map(v => v.trim().replace(/^"|"$/g, '')));
+    }
 
-            // Check password
-            if (password !== PASSWORD) {
-                showMessage('❌ Incorrect password!', 'error');
-                document.getElementById('passwordInput').value = '';
-                return;
-            }
+    async function loadData() {
+        try {
+            const url = CSV_URL + '&t=' + Date.now();
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to load data');
 
-            button.disabled = true;
-            button.textContent = 'Adding...';
+            const csvText = await response.text();
+            const rows = parseCSV(csvText);
 
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        name: name,
-                        food: food,
-                        password: PASSWORD, // Send password for server-side verification
-                        ts: Date.now()
-                    })
+            const foodList = document.getElementById('foodList');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const itemCount = document.getElementById('itemCount');
+
+            loadingMessage.style.display = 'none';
+            foodList.innerHTML = '';
+
+            if (rows.length > 1) {
+                const dataRows = rows.slice(1).filter(row => row[0] && row[1]);
+                itemCount.textContent = dataRows.length;
+
+                dataRows.forEach((row, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'food-item';
+                    li.style.animationDelay = `${index * 0.05}s`;
+                    li.innerHTML = `
+                        <span class="name">${escapeHtml(row[0])}</span>
+                        <span class="item">${escapeHtml(row[1])}</span>
+                    `;
+                    foodList.appendChild(li);
                 });
-
-                showMessage(`✅ Added ${name} - ${food} to the roster!`, 'success');
-                document.getElementById('nameInput').value = '';
-                document.getElementById('foodInput').value = '';
-                document.getElementById('passwordInput').value = '';
-                
-                setTimeout(loadData, 2000);
-            } catch (error) {
-                showMessage('✅ Item submitted! Refreshing list...', 'success');
-                document.getElementById('nameInput').value = '';
-                document.getElementById('foodInput').value = '';
-                document.getElementById('passwordInput').value = '';
-                setTimeout(loadData, 2000);
-            } finally {
-                button.disabled = false;
-                button.textContent = 'Add to Roster';
+            } else {
+                itemCount.textContent = '0';
+                foodList.innerHTML =
+                    '<li class="food-item"><span class="name">No items yet</span><span class="item">Be the first to add!</span></li>';
             }
+        } catch (error) {
+            document.getElementById('loadingMessage').innerHTML =
+                `<div class="error">Error loading data.<br><small>${error.message}</small></div>`;
+        }
+    }
+
+    // ================ ADD ITEM (SECURE) =================
+    async function addItem() {
+        const name = document.getElementById('nameInput').value.trim();
+        const food = document.getElementById('foodInput').value.trim();
+        const button = document.getElementById('submitButton');
+
+        if (!name || !food) {
+            showMessage('⚠️ Please fill in all fields!', 'error');
+            return;
         }
 
-        function showMessage(text, type) {
-            const messageArea = document.getElementById('messageArea');
-            messageArea.innerHTML = `<div class="${type}">${text}</div>`;
-            setTimeout(() => messageArea.innerHTML = '', 4000);
+        if (!SCRIPT_URL || !API_KEY) {
+            showMessage('⚠️ App not configured with API credentials', 'error');
+            return;
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        button.disabled = true;
+        button.textContent = 'Adding...';
 
-        // Initialize
-        updateCountdown('mainCountdown');
-        setInterval(() => {
-            updateCountdown('mainCountdown');
-        }, 1000);
-        
-        loadData();
-        setInterval(loadData, 30000);
-    </script>
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    key: API_KEY,
+                    name,
+                    food,
+                    ts: Date.now()
+                })
+            });
+
+            const json = await res.json();
+
+            if (!json.success) {
+                throw new Error(json.error || 'Server rejected request');
+            }
+
+            showMessage(`✅ Added ${name} - ${food}!`, 'success');
+
+            document.getElementById('nameInput').value = '';
+            document.getElementById('foodInput').value = '';
+
+            setTimeout(loadData, 1500);
+
+        } catch (error) {
+            showMessage('❌ ' + error.message, 'error');
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Add to Roster';
+        }
+    }
+
+    function showMessage(text, type) {
+        const messageArea = document.getElementById('messageArea');
+        messageArea.innerHTML = `<div class="${type}">${text}</div>`;
+        setTimeout(() => messageArea.innerHTML = '', 4000);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ================ INIT =================
+    updateCountdown('mainCountdown');
+    setInterval(() => updateCountdown('mainCountdown'), 1000);
+
+    loadData();
+    setInterval(loadData, 30000);
+</script>
+
 </body>
 </html>
