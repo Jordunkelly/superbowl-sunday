@@ -707,18 +707,12 @@
 
         async function loadData() {
             try {
-                // Triple cache busting: version + timestamp + random
-                const cacheBuster = `v${refreshVersion}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-                const url = `${CSV_URL}&nocache=${cacheBuster}`;
+                // Simple but effective cache busting
+                const cacheBuster = `v${refreshVersion}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+                const url = `${CSV_URL}&cb=${cacheBuster}`;
                 
                 const response = await fetch(url, {
-                    method: 'GET',
-                    cache: 'no-store',
-                    headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                    }
+                    cache: 'no-store'
                 });
                 
                 if (!response.ok) throw new Error('Failed to load data');
@@ -924,12 +918,6 @@
             // Increment version to bust cache harder
             refreshVersion++;
             
-            // Clear any cached data
-            if (window.caches) {
-                const cacheNames = await caches.keys();
-                await Promise.all(cacheNames.map(name => caches.delete(name)));
-            }
-            
             // Wait for Google Sheets to propagate (they cache for ~2-3 seconds)
             await new Promise(resolve => setTimeout(resolve, 3000));
             
@@ -945,13 +933,6 @@
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
                 loadData();
-            }
-        });
-        
-        // Force reload on browser back/forward
-        window.addEventListener('pageshow', (event) => {
-            if (event.persisted) {
-                window.location.reload();
             }
         });
 
