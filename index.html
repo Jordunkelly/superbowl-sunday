@@ -518,7 +518,6 @@
 
     // ⚠️ THESE SHOULD COME FROM ENV VARIABLES IN REAL HOSTING
     const SCRIPT_URL = window.GSHEET_URL || '';
-    const API_KEY = window.GSHEET_KEY || '';
 
     const SUPERBOWL_DATE = new Date('2026-02-09T18:30:00-05:00');
 
@@ -598,16 +597,11 @@
     async function addItem() {
         const name = document.getElementById('nameInput').value.trim();
         const food = document.getElementById('foodInput').value.trim();
+        const password = document.getElementById('passwordInput').value.trim();
         const button = document.getElementById('submitButton');
     
-        if (!name || !food) {
+        if (!name || !food || !password) {
             showMessage('⚠️ Please fill in all fields!', 'error');
-            return;
-        }
-    
-        // Make sure credentials exist
-        if (!window.GSHEET_URL || !window.GSHEET_KEY) {
-            showMessage('❌ Site not configured with API credentials', 'error');
             return;
         }
     
@@ -615,15 +609,15 @@
         button.textContent = 'Adding...';
     
         try {
-            const response = await fetch(window.GSHEET_URL, {
+            const response = await fetch(SCRIPT_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    key: window.GSHEET_KEY,
                     name: name,
                     food: food,
+                    password: password,
                     ts: Date.now()
                 })
             });
@@ -638,8 +632,8 @@
     
             document.getElementById('nameInput').value = '';
             document.getElementById('foodInput').value = '';
+            document.getElementById('passwordInput').value = '';
     
-            // Refresh list
             setTimeout(loadData, 1500);
     
         } catch (error) {
@@ -649,6 +643,7 @@
             button.textContent = 'Add to Roster';
         }
     }
+
 
 
         
