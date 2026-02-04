@@ -314,44 +314,33 @@
 
         .food-item-actions {
             display: flex;
-            gap: 8px;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #e0e0e0;
+            gap: 6px;
+            margin-top: 10px;
+            justify-content: flex-end;
         }
 
         .btn-small {
-            padding: 6px 12px;
-            font-family: 'Oswald', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            padding: 4px 8px;
+            font-size: 1rem;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             transition: all 0.2s ease;
-            flex: 1;
+            background: transparent;
+            opacity: 0.5;
+        }
+
+        .btn-small:hover {
+            opacity: 1;
+            transform: scale(1.1);
         }
 
         .btn-edit {
-            background: linear-gradient(135deg, #0080c6 0%, #005a8d 100%);
-            color: white;
-        }
-
-        .btn-edit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 128, 198, 0.3);
+            color: #0080c6;
         }
 
         .btn-delete {
-            background: linear-gradient(135deg, #c8102e 0%, #8b0000 100%);
-            color: white;
-        }
-
-        .btn-delete:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(200, 16, 46, 0.3);
+            color: #c8102e;
         }
 
         @keyframes slideInRight {
@@ -637,7 +626,7 @@
     <script>
         // ================= CONFIG =================
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/pub?gid=0&single=true&output=csv';
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwipxR_QszEA2MaYRfIODS-tP8l6UJ0Z1RwzIN0m4MtDz-DKdOT6Ox3Fh_9b2pCcfg6w/exec'; // Update this with your new Apps Script URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwipxR_QszEA2MaYRfIODS-tP8l6UJ0Z1RwzIN0m4MtDz-DKdOT6Ox3Fh_9b2pCcfg6w/exec';
         const SUPERBOWL_DATE = new Date('2026-02-09T18:30:00-05:00');
 
         // Modal and edit state
@@ -704,8 +693,12 @@
                             <span class="name">${escapeHtml(row[0])}</span>
                             <span class="item">${escapeHtml(row[1])}</span>
                             <div class="food-item-actions">
-                                <button class="btn-small btn-edit" onclick="editItem(${rowNumber}, '${escapeHtml(row[0])}', '${escapeHtml(row[1])}')">✏️</button>
-                                <button class="btn-small btn-delete" onclick="deleteItem(${rowNumber}, '${escapeHtml(row[0])}')">🗑️</button>
+                                <button class="btn-small btn-edit" onclick="editItem(${rowNumber}, '${escapeHtml(row[0])}', '${escapeHtml(row[1])}')" title="Edit">
+                                    ✏️
+                                </button>
+                                <button class="btn-small btn-delete" onclick="deleteItem(${rowNumber}, '${escapeHtml(row[0])}')" title="Delete">
+                                    🗑️
+                                </button>
                             </div>
                         `;
                         foodList.appendChild(li);
