@@ -609,19 +609,18 @@
         button.textContent = 'Adding...';
     
         try {
+            const params = new URLSearchParams();
+            params.append("name", name);
+            params.append("food", food);
+            params.append("password", password);
+            params.append("ts", Date.now());
+            
             const response = await fetch(SCRIPT_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    name: name,
-                    food: food,
-                    password: password,
-                    ts: Date.now()
-                })
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+              body: params.toString()
             });
-    
+                
             const result = await response.json();
     
             if (!result.success) {
