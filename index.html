@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Super Bowl Sunday Party Tracker!</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -251,6 +254,41 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .card h2 .left-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--gold);
+            color: var(--field-green);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: auto;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .item-count {
@@ -556,16 +594,16 @@
 
         <!-- Game Info -->
         <div class="game-info">
-            <div class="game-title">SUPER BOWL LX</div>
+            <div class="game-title">SUPER BOWL LIX</div>
             <div class="game-league">National Football League</div>
             <div class="matchup">
-                <div class="team">Patriots</div>
+                <div class="team">CHIEFS</div>
                 <div class="vs">VS</div>
-                <div class="team">Seahawkz</div>
+                <div class="team">EAGLES</div>
             </div>
             <div class="game-details">
-                <strong>📍 224 Highland Terrace Way</strong><br>
-                <strong>📅 Feb 8, 2026 • 6:30 PM ET Levi Stadium</strong><br>
+                <strong>📍 Caesars Superdome, New Orleans</strong><br>
+                <strong>📅 Feb 9, 2026 • 6:30 PM ET</strong><br>
                 <strong>📺 FOX</strong>
             </div>
         </div>
@@ -579,8 +617,11 @@
         <!-- Food List -->
         <div class="card">
             <h2>
-                🏈 The Lineup
-                <span class="item-count" id="itemCount">0</span>
+                <div class="left-section">
+                    🏈 The Lineup
+                    <span class="item-count" id="itemCount">0</span>
+                </div>
+                <button class="refresh-btn" id="refreshBtn" onclick="forceRefresh()">🔄 Refresh</button>
             </h2>
             <div id="loadingMessage" class="loading">Loading the roster...</div>
             <ul class="food-list" id="foodList"></ul>
@@ -666,8 +707,20 @@
 
         async function loadData() {
             try {
-                const url = CSV_URL + '&t=' + Date.now();
-                const response = await fetch(url);
+                // Triple cache busting: version + timestamp + random
+                const cacheBuster = `v${refreshVersion}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+                const url = `${CSV_URL}&nocache=${cacheBuster}`;
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+                
                 if (!response.ok) throw new Error('Failed to load data');
 
                 const csvText = await response.text();
@@ -772,8 +825,9 @@
                     throw new Error(result.error || 'Failed to delete');
                 }
 
-                showMessage('✅ Item deleted successfully!', 'success');
-                setTimeout(loadData, 1000);
+                showMessage('✅ Item deleted! Refreshing...', 'success');
+                // Immediately trigger force refresh (it has built-in delay)
+                forceRefresh();
 
             } catch (error) {
                 showMessage('❌ ' + error.message, 'error');
@@ -817,7 +871,7 @@
                     throw new Error(result.error || 'Server rejected request');
                 }
 
-                showMessage(`✅ ${editingRow ? 'Updated' : 'Added'} ${name} - ${food}!`, 'success');
+                showMessage(`✅ ${editingRow ? 'Updated' : 'Added'} ${name} - ${food}! Refreshing...`, 'success');
 
                 document.getElementById('nameInput').value = '';
                 document.getElementById('foodInput').value = '';
@@ -827,7 +881,8 @@
                     cancelEdit();
                 }
 
-                setTimeout(loadData, 1000);
+                // Immediately trigger force refresh (it has built-in delay)
+                forceRefresh();
 
             } catch (error) {
                 showMessage('❌ ' + error.message, 'error');
@@ -855,6 +910,50 @@
             document.getElementById('passwordModal').classList.remove('show');
             modalCallback = null;
         }
+
+        // ================ FORCE REFRESH =================
+        let refreshVersion = 0;
+        
+        async function forceRefresh() {
+            const btn = document.getElementById('refreshBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '🔄 Refreshing...';
+            }
+            
+            // Increment version to bust cache harder
+            refreshVersion++;
+            
+            // Clear any cached data
+            if (window.caches) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+            }
+            
+            // Wait for Google Sheets to propagate (they cache for ~2-3 seconds)
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            await loadData();
+            
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '🔄 Refresh';
+            }
+        }
+        
+        // Auto-refresh on page visibility change (tab switching back)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                loadData();
+            }
+        });
+        
+        // Force reload on browser back/forward
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
 
         // ================ HELPERS =================
         function showMessage(text, type) {
