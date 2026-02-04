@@ -312,6 +312,48 @@
             display: block;
         }
 
+        .food-item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #0080c6 0%, #005a8d 100%);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 128, 198, 0.3);
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #c8102e 0%, #8b0000 100%);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(200, 16, 46, 0.3);
+        }
+
         @keyframes slideInRight {
             from {
                 opacity: 0;
@@ -418,7 +460,6 @@
             to { opacity: 1; }
         }
 
-        /* Password input in form */
         .password-hint {
             background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
             padding: 12px;
@@ -427,6 +468,73 @@
             margin-bottom: 20px;
             font-size: 0.95rem;
             color: var(--field-green);
+        }
+
+        /* Password Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.5rem;
+            color: var(--field-green);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            font-size: 1rem;
+        }
+
+        .form-editing {
+            background: linear-gradient(135deg, rgba(0, 128, 198, 0.15) 0%, rgba(0, 128, 198, 0.05) 100%);
+            border-left: 4px solid #0080c6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .form-editing strong {
+            color: #0080c6;
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cancel-edit-btn {
+            background: #999 !important;
+            margin-bottom: 20px;
         }
 
         @media (max-width: 768px) {
@@ -491,7 +599,8 @@
 
         <!-- Add Item Form -->
         <div class="card" id="addItemCard">
-            <h2>📝 Add Your Contribution</h2>
+            <h2 id="formTitle">📝 Add Your Contribution</h2>
+            <div id="editingNotice"></div>
             <div class="password-hint">
                 🔒 Password required to add items
             </div>
@@ -508,164 +617,275 @@
                 <label for="passwordInput">Password</label>
                 <input type="password" id="passwordInput" placeholder="Enter password to submit" required>
             </div>
-            <button id="submitButton" onclick="addItem()">Add to Roster</button>
+            <button id="submitButton" onclick="submitForm()">Add to Roster</button>
+        </div>
+    </div>
+
+    <!-- Password Modal for Delete -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Enter Password</h3>
+            <p id="modalMessage" style="color: #666; margin-bottom: 20px;">Enter password to continue</p>
+            <input type="password" id="modalPasswordInput" placeholder="Enter password">
+            <div class="modal-buttons">
+                <button onclick="cancelModal()" style="background: #999;">Cancel</button>
+                <button onclick="confirmModal()" id="modalConfirmBtn">Confirm</button>
+            </div>
         </div>
     </div>
 
     <script>
-    // ================= CONFIG (SAFE PART) =================
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/pub?gid=0&single=true&output=csv';
+        // ================= CONFIG =================
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/pub?gid=0&single=true&output=csv';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwipxR_QszEA2MaYRfIODS-tP8l6UJ0Z1RwzIN0m4MtDz-DKdOT6Ox3Fh_9b2pCcfg6w/exec'; // Update this with your new Apps Script URL
+        const SUPERBOWL_DATE = new Date('2026-02-09T18:30:00-05:00');
 
-    // ⚠️ THESE SHOULD COME FROM ENV VARIABLES IN REAL HOSTING
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdLYNnMcfHRHwktSVr7fZXH7xaI9GMwjkCo_qBcd2_V13qOFuOhj5alACIqNnSlM1z-A/exec';
+        // Modal and edit state
+        let modalCallback = null;
+        let editingRow = null;
 
-    const SUPERBOWL_DATE = new Date('2026-02-09T18:30:00-05:00');
+        // ================ COUNTDOWN =================
+        function updateCountdown(elementId) {
+            const now = new Date();
+            const diff = SUPERBOWL_DATE - now;
 
-    // ================ COUNTDOWN =================
-    function updateCountdown(elementId) {
-        const now = new Date();
-        const diff = SUPERBOWL_DATE - now;
-
-        if (diff <= 0) {
-            document.getElementById(elementId).innerHTML =
-                '<div class="countdown-unit"><div class="countdown-number">🏈</div><div class="countdown-text">GAME TIME!</div></div>';
-            return;
-        }
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        document.getElementById(elementId).innerHTML = `
-            <div class="countdown-unit"><div class="countdown-number">${days}</div><div class="countdown-text">Days</div></div>
-            <div class="countdown-unit"><div class="countdown-number">${hours}</div><div class="countdown-text">Hours</div></div>
-            <div class="countdown-unit"><div class="countdown-number">${minutes}</div><div class="countdown-text">Minutes</div></div>
-            <div class="countdown-unit"><div class="countdown-number">${seconds}</div><div class="countdown-text">Seconds</div></div>
-        `;
-    }
-
-    // ================ CSV LOADER =================
-    function parseCSV(text) {
-        return text.split('\n')
-            .filter(l => l.trim())
-            .map(line => line.split(',').map(v => v.trim().replace(/^"|"$/g, '')));
-    }
-
-    async function loadData() {
-        try {
-            const url = CSV_URL + '&t=' + Date.now();
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Failed to load data');
-
-            const csvText = await response.text();
-            const rows = parseCSV(csvText);
-
-            const foodList = document.getElementById('foodList');
-            const loadingMessage = document.getElementById('loadingMessage');
-            const itemCount = document.getElementById('itemCount');
-
-            loadingMessage.style.display = 'none';
-            foodList.innerHTML = '';
-
-            if (rows.length > 1) {
-                const dataRows = rows.slice(1).filter(row => row[0] && row[1]);
-                itemCount.textContent = dataRows.length;
-
-                dataRows.forEach((row, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'food-item';
-                    li.style.animationDelay = `${index * 0.05}s`;
-                    li.innerHTML = `
-                        <span class="name">${escapeHtml(row[0])}</span>
-                        <span class="item">${escapeHtml(row[1])}</span>
-                    `;
-                    foodList.appendChild(li);
-                });
-            } else {
-                itemCount.textContent = '0';
-                foodList.innerHTML =
-                    '<li class="food-item"><span class="name">No items yet</span><span class="item">Be the first to add!</span></li>';
+            if (diff <= 0) {
+                document.getElementById(elementId).innerHTML =
+                    '<div class="countdown-unit"><div class="countdown-number">🏈</div><div class="countdown-text">GAME TIME!</div></div>';
+                return;
             }
-        } catch (error) {
-            document.getElementById('loadingMessage').innerHTML =
-                `<div class="error">Error loading data.<br><small>${error.message}</small></div>`;
-        }
-    }
 
-    // ================ ADD ITEM (SECURE) =================
-    async function addItem() {
-        const name = document.getElementById('nameInput').value.trim();
-        const food = document.getElementById('foodInput').value.trim();
-        const password = document.getElementById('passwordInput').value.trim();
-        const button = document.getElementById('submitButton');
-    
-        if (!name || !food || !password) {
-            showMessage('⚠️ Please fill in all fields!', 'error');
-            return;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById(elementId).innerHTML = `
+                <div class="countdown-unit"><div class="countdown-number">${days}</div><div class="countdown-text">Days</div></div>
+                <div class="countdown-unit"><div class="countdown-number">${hours}</div><div class="countdown-text">Hours</div></div>
+                <div class="countdown-unit"><div class="countdown-number">${minutes}</div><div class="countdown-text">Minutes</div></div>
+                <div class="countdown-unit"><div class="countdown-number">${seconds}</div><div class="countdown-text">Seconds</div></div>
+            `;
         }
-    
-        button.disabled = true;
-        button.textContent = 'Adding...';
-    
-        try {
-            const params = new URLSearchParams();
-            params.append("name", name);
-            params.append("food", food);
-            params.append("password", password);
-            params.append("ts", Date.now());
+
+        // ================ CSV LOADER =================
+        function parseCSV(text) {
+            return text.split('\n')
+                .filter(l => l.trim())
+                .map(line => line.split(',').map(v => v.trim().replace(/^"|"$/g, '')));
+        }
+
+        async function loadData() {
+            try {
+                const url = CSV_URL + '&t=' + Date.now();
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load data');
+
+                const csvText = await response.text();
+                const rows = parseCSV(csvText);
+
+                const foodList = document.getElementById('foodList');
+                const loadingMessage = document.getElementById('loadingMessage');
+                const itemCount = document.getElementById('itemCount');
+
+                loadingMessage.style.display = 'none';
+                foodList.innerHTML = '';
+
+                if (rows.length > 1) {
+                    const dataRows = rows.slice(1).filter(row => row[0] && row[1]);
+                    itemCount.textContent = dataRows.length;
+
+                    dataRows.forEach((row, index) => {
+                        const rowNumber = index + 2; // +2 because row 1 is headers
+                        const li = document.createElement('li');
+                        li.className = 'food-item';
+                        li.style.animationDelay = `${index * 0.05}s`;
+                        li.innerHTML = `
+                            <span class="name">${escapeHtml(row[0])}</span>
+                            <span class="item">${escapeHtml(row[1])}</span>
+                            <div class="food-item-actions">
+                                <button class="btn-small btn-edit" onclick="editItem(${rowNumber}, '${escapeHtml(row[0])}', '${escapeHtml(row[1])}')">
+                                    ✏️ Edit
+                                </button>
+                                <button class="btn-small btn-delete" onclick="deleteItem(${rowNumber}, '${escapeHtml(row[0])}')">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        `;
+                        foodList.appendChild(li);
+                    });
+                } else {
+                    itemCount.textContent = '0';
+                    foodList.innerHTML =
+                        '<li class="food-item"><span class="name">No items yet</span><span class="item">Be the first to add!</span></li>';
+                }
+            } catch (error) {
+                document.getElementById('loadingMessage').innerHTML =
+                    `<div class="error">Error loading data.<br><small>${error.message}</small></div>`;
+            }
+        }
+
+        // ================ EDIT ITEM =================
+        function editItem(rowNumber, name, item) {
+            editingRow = rowNumber;
+            document.getElementById('nameInput').value = name;
+            document.getElementById('foodInput').value = item;
+            document.getElementById('formTitle').textContent = '✏️ Edit Item';
+            document.getElementById('submitButton').textContent = 'Update Item';
+            document.getElementById('editingNotice').innerHTML = `
+                <div class="form-editing">
+                    <strong>Editing:</strong> ${name} - ${item}
+                    <button class="cancel-edit-btn" onclick="cancelEdit()" style="width: 100%; margin-top: 10px; padding: 8px;">Cancel Edit</button>
+                </div>
+            `;
             
-            const response = await fetch(SCRIPT_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-              body: params.toString()
-            });
-                
-            const result = await response.json();
-    
-            if (!result.success) {
-                throw new Error(result.error || 'Server rejected request');
-            }
-    
-            showMessage(`✅ Added ${name} - ${food}!`, 'success');
-    
+            // Scroll to form
+            document.getElementById('addItemCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            editingRow = null;
             document.getElementById('nameInput').value = '';
             document.getElementById('foodInput').value = '';
             document.getElementById('passwordInput').value = '';
-    
-            setTimeout(loadData, 1500);
-    
-        } catch (error) {
-            showMessage('❌ ' + error.message, 'error');
-        } finally {
-            button.disabled = false;
-            button.textContent = 'Add to Roster';
+            document.getElementById('formTitle').textContent = '📝 Add Your Contribution';
+            document.getElementById('submitButton').textContent = 'Add to Roster';
+            document.getElementById('editingNotice').innerHTML = '';
         }
-    }
 
+        // ================ DELETE ITEM =================
+        function deleteItem(rowNumber, name) {
+            document.getElementById('modalTitle').textContent = 'Delete Item?';
+            document.getElementById('modalMessage').textContent = `Are you sure you want to delete "${name}"? Enter password to confirm.`;
+            document.getElementById('modalPasswordInput').value = '';
+            modalCallback = async (password) => {
+                await performDelete(rowNumber, password);
+            };
+            document.getElementById('passwordModal').classList.add('show');
+        }
 
+        async function performDelete(rowNumber, password) {
+            try {
+                const params = new URLSearchParams();
+                params.append("action", "delete");
+                params.append("rowNumber", rowNumber);
+                params.append("password", password);
 
-        
+                const response = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+                    body: params.toString()
+                });
 
-    function showMessage(text, type) {
-        const messageArea = document.getElementById('messageArea');
-        messageArea.innerHTML = `<div class="${type}">${text}</div>`;
-        setTimeout(() => messageArea.innerHTML = '', 4000);
-    }
+                const result = await response.json();
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to delete');
+                }
 
-    // ================ INIT =================
-    updateCountdown('mainCountdown');
-    setInterval(() => updateCountdown('mainCountdown'), 1000);
+                showMessage('✅ Item deleted successfully!', 'success');
+                setTimeout(loadData, 1000);
 
-    loadData();
-    setInterval(loadData, 30000);
-</script>
+            } catch (error) {
+                showMessage('❌ ' + error.message, 'error');
+            }
+        }
 
+        // ================ ADD/EDIT ITEM =================
+        async function submitForm() {
+            const name = document.getElementById('nameInput').value.trim();
+            const food = document.getElementById('foodInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+            const button = document.getElementById('submitButton');
+
+            if (!name || !food || !password) {
+                showMessage('⚠️ Please fill in all fields!', 'error');
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = editingRow ? 'Updating...' : 'Adding...';
+
+            try {
+                const params = new URLSearchParams();
+                params.append("action", editingRow ? "edit" : "add");
+                params.append("name", name);
+                params.append("food", food);
+                params.append("password", password);
+                if (editingRow) {
+                    params.append("rowNumber", editingRow);
+                }
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+                    body: params.toString()
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Server rejected request');
+                }
+
+                showMessage(`✅ ${editingRow ? 'Updated' : 'Added'} ${name} - ${food}!`, 'success');
+
+                document.getElementById('nameInput').value = '';
+                document.getElementById('foodInput').value = '';
+                document.getElementById('passwordInput').value = '';
+                
+                if (editingRow) {
+                    cancelEdit();
+                }
+
+                setTimeout(loadData, 1000);
+
+            } catch (error) {
+                showMessage('❌ ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = editingRow ? 'Update Item' : 'Add to Roster';
+            }
+        }
+
+        // ================ MODAL HANDLERS =================
+        function confirmModal() {
+            const password = document.getElementById('modalPasswordInput').value.trim();
+            if (!password) {
+                alert('Please enter password');
+                return;
+            }
+            document.getElementById('passwordModal').classList.remove('show');
+            if (modalCallback) {
+                modalCallback(password);
+                modalCallback = null;
+            }
+        }
+
+        function cancelModal() {
+            document.getElementById('passwordModal').classList.remove('show');
+            modalCallback = null;
+        }
+
+        // ================ HELPERS =================
+        function showMessage(text, type) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="${type}">${text}</div>`;
+            setTimeout(() => messageArea.innerHTML = '', 4000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ================ INIT =================
+        updateCountdown('mainCountdown');
+        setInterval(() => updateCountdown('mainCountdown'), 1000);
+
+        loadData();
+        setInterval(loadData, 30000);
+    </script>
 </body>
 </html>
