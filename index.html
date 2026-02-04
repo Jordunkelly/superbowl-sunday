@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Bowl Sunday Party Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --field-green: #2d5016;
+            --field-light: #3d6b1f;
+            --endzone: #1a3d0a;
+            --leather: #7c4a2e;
+            --chalk: #f5f5f0;
+            --gold: #ffd700;
+            --shadow: rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(180deg, var(--endzone) 0%, var(--field-green) 20%, var(--field-green) 80%, var(--endzone) 100%);
+            min-height: 100vh;
+            color: var(--chalk);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Football field lines */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 9%, rgba(255, 255, 255, 0.05) 9%, rgba(255, 255, 255, 0.05) 10%),
+                repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(255, 255, 255, 0.1) 49px, rgba(255, 255, 255, 0.1) 50px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Banner */
+        .banner {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: slideDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .banner h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3rem, 10vw, 6rem);
+            letter-spacing: 4px;
+            color: var(--gold);
+            text-shadow: 
+                3px 3px 0 var(--leather),
+                6px 6px 10px var(--shadow);
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        .banner .subtitle {
+            font-family: 'Oswald', sans-serif;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: var(--chalk);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 600;
+        }
+
+        .banner .date {
+            font-size: 1rem;
+            color: rgba(245, 245, 240, 0.7);
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 10px 40px var(--shadow),
+                0 0 0 3px var(--leather);
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.2s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card h2 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 2rem;
+            color: var(--field-green);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 3px solid var(--gold);
+            padding-bottom: 10px;
+        }
+
+        /* List */
+        .food-list {
+            list-style: none;
+        }
+
+        .food-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%);
+            border-left: 4px solid var(--leather);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            animation: slideInRight 0.4s ease-out backwards;
+        }
+
+        .food-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-left-color: var(--gold);
+        }
+
+        .food-item .name {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.3rem;
+            color: var(--field-green);
+            font-weight: 700;
+        }
+
+        .food-item .item {
+            color: var(--leather);
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1rem;
+            color: var(--field-green);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--leather) 0%, #5a3419 100%);
+            color: var(--chalk);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #8b5a3c 0%, var(--leather) 100%);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--field-green);
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .error {
+            background: #ffe0e0;
+            color: #c00;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #c00;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #e0ffe0;
+            color: #060;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #060;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .info {
+            background: #e0f0ff;
+            color: #004080;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #004080;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        /* Password overlay */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--field-green) 0%, var(--endzone) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .password-overlay.hidden {
+            display: none;
+        }
+
+        .password-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px var(--shadow);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .password-box h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: var(--field-green);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .password-box p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .password-error {
+            color: #c00;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .password-error.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .food-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Password Overlay -->
+    <div class="password-overlay" id="passwordOverlay">
+        <div class="password-box">
+            <h2>🏈 Game Day Access</h2>
+            <p>Enter the password to add items</p>
+            <input type="password" id="passwordInput" placeholder="Enter password">
+            <p class="password-error" id="passwordError">Incorrect password!</p>
+            <button onclick="checkPassword()">Enter</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Banner -->
+        <div class="banner">
+            <h1>SUPER BOWL</h1>
+            <div class="subtitle">Party Tracker</div>
+            <div class="date">Who's bringing what?</div>
+        </div>
+
+        <!-- Food List -->
+        <div class="card">
+            <h2>🏈 The Lineup</h2>
+            <div id="loadingMessage" class="loading">Loading the roster...</div>
+            <ul class="food-list" id="foodList"></ul>
+        </div>
+
+        <!-- Add Item Form -->
+        <div class="card" id="addItemCard" style="display: none;">
+            <h2>📝 Add Your Contribution</h2>
+            <div class="info">
+                <strong>📝 To add items:</strong> Edit the Google Sheet directly at: <br>
+                <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/edit" target="_blank" style="color: #004080; font-weight: 600; text-decoration: underline;">Open Google Sheet</a>
+                <br><small>Changes will appear here within 30 seconds</small>
+            </div>
+            <div id="messageArea"></div>
+            <div class="form-group">
+                <label for="nameInput">Your Name</label>
+                <input type="text" id="nameInput" placeholder="e.g., John Smith" required>
+            </div>
+            <div class="form-group">
+                <label for="foodInput">What You're Bringing</label>
+                <input type="text" id="foodInput" placeholder="e.g., Buffalo Wings" required>
+            </div>
+            <button id="submitButton" onclick="showSheetLink()">Open Google Sheet to Add</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/pub?gid=0&single=true&output=csv';
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGdwDpzWkYzlwzPxUlz1OpzzK22pQbFNNPr1xv0U0M5rxbZNyTLqyJzPp_MeXJnW0dpn6qnrFb8Wab/edit';
+        const PASSWORD = 'kelly';
+        let isAuthenticated = false;
+
+        // Check password
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('passwordError');
+            
+            if (input.value === PASSWORD) {
+                isAuthenticated = true;
+                document.getElementById('passwordOverlay').classList.add('hidden');
+                document.getElementById('addItemCard').style.display = 'block';
+            } else {
+                error.classList.add('show');
+                input.value = '';
+                setTimeout(() => error.classList.remove('show'), 3000);
+            }
+        }
+
+        // Allow Enter key for password
+        document.getElementById('passwordInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        // Parse CSV
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const result = [];
+            
+            for (let line of lines) {
+                if (line.trim()) {
+                    // Simple CSV parsing (handles basic cases)
+                    const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                    result.push(values);
+                }
+            }
+            
+            return result;
+        }
+
+        // Load data from published CSV
+        async function loadData() {
+            try {
+                // Add timestamp to prevent caching
+                const url = CSV_URL + '&t=' + new Date().getTime();
+                const response = await fetch(url);
+                
+                if (!response.ok) throw new Error('Failed to load data');
+                
+                const csvText = await response.text();
+                const rows = parseCSV(csvText);
+                
+                const foodList = document.getElementById('foodList');
+                const loadingMessage = document.getElementById('loadingMessage');
+                
+                loadingMessage.style.display = 'none';
+                foodList.innerHTML = '';
+                
+                // Skip header row (index 0) and display data rows
+                if (rows.length > 1) {
+                    rows.slice(1).forEach((row, index) => {
+                        if (row[0] && row[1]) {
+                            const li = document.createElement('li');
+                            li.className = 'food-item';
+                            li.style.animationDelay = `${index * 0.05}s`;
+                            li.innerHTML = `
+                                <span class="name">${escapeHtml(row[0])}</span>
+                                <span class="item">${escapeHtml(row[1])}</span>
+                            `;
+                            foodList.appendChild(li);
+                        }
+                    });
+                } else {
+                    foodList.innerHTML = '<li class="food-item"><span class="name">No items yet</span><span class="item">Be the first to add!</span></li>';
+                }
+            } catch (error) {
+                document.getElementById('loadingMessage').innerHTML = 
+                    `<div class="error">Error loading data. Please check your internet connection.<br><small>Error: ${error.message}</small></div>`;
+                console.error('Error:', error);
+            }
+        }
+
+        function showSheetLink() {
+            const name = document.getElementById('nameInput').value.trim();
+            const food = document.getElementById('foodInput').value.trim();
+            
+            if (!name || !food) {
+                showMessage('⚠️ Fill in both fields, then click the button to open the sheet!', 'error');
+                return;
+            }
+
+            // Open the Google Sheet
+            window.open(SHEET_URL, '_blank');
+            showMessage(`✅ Opening Google Sheet! Add: ${name} - ${food}`, 'success');
+            
+            // Clear form
+            document.getElementById('nameInput').value = '';
+            document.getElementById('foodInput').value = '';
+            
+            // Reload after a delay
+            setTimeout(loadData, 3000);
+        }
+
+        function showMessage(text, type) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="${type}">${text}</div>`;
+            setTimeout(() => messageArea.innerHTML = '', 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load data on page load
+        loadData();
+        
+        // Refresh every 30 seconds
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
