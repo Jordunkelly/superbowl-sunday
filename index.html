@@ -704,12 +704,8 @@
                             <span class="name">${escapeHtml(row[0])}</span>
                             <span class="item">${escapeHtml(row[1])}</span>
                             <div class="food-item-actions">
-                                <button class="btn-small btn-edit" onclick="editItem(${rowNumber}, '${escapeHtml(row[0])}', '${escapeHtml(row[1])}')">
-                                    ✏️ Edit
-                                </button>
-                                <button class="btn-small btn-delete" onclick="deleteItem(${rowNumber}, '${escapeHtml(row[0])}')">
-                                    🗑️ Delete
-                                </button>
+                                <button class="btn-small btn-edit" onclick="editItem(${rowNumber}, '${escapeHtml(row[0])}', '${escapeHtml(row[1])}')">✏️</button>
+                                <button class="btn-small btn-delete" onclick="deleteItem(${rowNumber}, '${escapeHtml(row[0])}')">🗑️</button>
                             </div>
                         `;
                         foodList.appendChild(li);
